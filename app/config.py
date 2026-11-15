@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     app_name: str = "BookMe"
     environment: str = "development"
     debug: bool = True
+    database_url: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
