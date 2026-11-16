@@ -3,8 +3,8 @@ from fastapi import FastAPI, Depends
 
 from app.config import settings
 from app.routers.auth import router as auth_router
-from app.dependencies import get_current_user
-from app.models import User
+from app.dependencies import get_current_user, get_current_business, get_current_owner
+from app.models import User, Business
 
 
 app = FastAPI(
@@ -33,6 +33,31 @@ def get_my_account(
         "user_id": current_user.id,
         "full_name": current_user.full_name,
         "email": current_user.email,
+        "business_id": current_user.business_id,
+        "role": current_user.role,
+    }
+
+
+@app.get("/business/me")
+def get_my_business(
+    current_business: Business = Depends(get_current_business),
+):
+    return {
+        "business_id": current_business.id,
+        "business_name": current_business.name,
+        "email": current_business.email,
+        "phone": current_business.phone,
+        "address": current_business.address,
+    }
+
+
+@app.get("/owner/dashboard")
+def owner_dashboard(
+    current_user: User = Depends(get_current_owner),
+):
+    return {
+        "message": "Welcome to the owner dashboard",
+        "user_id": current_user.id,
         "business_id": current_user.business_id,
         "role": current_user.role,
     }
