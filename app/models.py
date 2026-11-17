@@ -1,5 +1,5 @@
 
-from datetime import datetime
+from datetime import datetime, time
 
 from sqlalchemy import (
     DateTime,
@@ -10,6 +10,8 @@ from sqlalchemy import (
     func,
     Boolean,
     ForeignKey,
+    Time,
+    UniqueConstraint
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -201,4 +203,112 @@ class Employee(Base):
 
     business: Mapped["Business"] = relationship(
         back_populates="employees",
+    )
+
+
+class Appointment(Base):
+    __tablename__ = "appointments"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    business_id: Mapped[int] = mapped_column(
+        ForeignKey("businesses.id"),
+        nullable=False,
+        index=True,
+    )
+
+    service_id: Mapped[int] = mapped_column(
+        ForeignKey("services.id"),
+        nullable=False,
+    )
+
+    employee_id: Mapped[int] = mapped_column(
+        ForeignKey("employees.id"),
+        nullable=False,
+    )
+
+    customer_name: Mapped[str] = mapped_column(
+        String(150),
+        nullable=False,
+    )
+
+    customer_email: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    customer_phone: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+    )
+
+    start_time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+
+    end_time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="pending",
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+
+class BusinessHours(Base):
+    __tablename__ = "business_hours"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "business_id",
+            "day_of_week",
+            name="uq_business_day",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    business_id: Mapped[int] = mapped_column(
+        ForeignKey("businesses.id"),
+        nullable=False,
+        index=True,
+    )
+
+    day_of_week: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    open_time: Mapped[time | None] = mapped_column(
+        Time,
+        nullable=True,
+    )
+
+    close_time: Mapped[time | None] = mapped_column(
+        Time,
+        nullable=True,
+    )
+
+    is_closed: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
     )

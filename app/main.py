@@ -7,6 +7,7 @@ from app.dependencies import get_current_user, get_current_business, get_current
 from app.models import User, Business
 from app.routers.services import router as services_router
 from app.routers.employees import router as employees_router
+from app.routers.business_hours import router as business_hours_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -18,6 +19,7 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(services_router)
 app.include_router(employees_router)
+app.include_router(business_hours_router)
 
 
 @app.get("/")
