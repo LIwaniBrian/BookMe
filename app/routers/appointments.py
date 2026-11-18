@@ -36,6 +36,7 @@ def create_appointment(
             Service.business_id == current_user.business_id,
             Service.is_active == True,
         )
+
         .first()
     )
 
@@ -52,6 +53,7 @@ def create_appointment(
             Employee.business_id == current_user.business_id,
             Employee.is_active == True,
         )
+        .with_for_update()
         .first()
     )
 
