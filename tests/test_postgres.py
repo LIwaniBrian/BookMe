@@ -1,8 +1,10 @@
 
+from tests.date_helpers import get_future_monday
 import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from threading import Barrier
+from zoneinfo import ZoneInfo
 
 import pytest
 from dotenv import dotenv_values
@@ -160,7 +162,7 @@ def test_concurrent_bookings_cannot_double_book(postgres_setup):
                 service_id=service_id,
                 employee_id=employee_id,
                 customer_name=customer_name,
-                start_time=datetime(2026, 11, 23, 10, 0),
+                start_time=get_future_monday(),
             )
 
             appointment = create_appointment(

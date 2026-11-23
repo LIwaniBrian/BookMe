@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from zoneinfo import ZoneInfo
 
 from app.database import get_db
 from app.dependencies import get_current_owner
@@ -11,7 +12,7 @@ from app.models import (
     Employee,
     Service,
 )
-
+BUSINESS_TIMEZONE = ZoneInfo("Africa/Johannesburg")
 router = APIRouter(
     prefix="/availability",
     tags=["Availability"],
@@ -26,6 +27,25 @@ def check_availability(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_owner),
 ):
+    if start_time.tzinfo is None or start_time.utcoffset() is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Appointment time must include a timezone.",
+        )
+
+    # Convert to South African business time.
+    start_time = (
+        start_time
+        .astimezone(BUSINESS_TIMEZONE)
+        .replace(tzinfo=None)
+    )
+
+    if start_time <= datetime.now(BUSINESS_TIMEZONE).replace(tzinfo=None):
+        return {
+            "available": False,
+            "reason": "Appointments cannot be booked in the past",
+        }
+
     service = (
         db.query(Service)
         .filter(
@@ -57,10 +77,6 @@ def check_availability(
             status_code=404,
             detail="Employee not found",
         )
-
-    end_time = start_time + timedelta(
-        minutes=service.duration_minutes
-    )
 
     end_time = start_time + timedelta(
         minutes=service.duration_minutes
@@ -109,6 +125,7 @@ def check_availability(
             "available": False,
             "reason": "Employee already has an appointment at this time",
         }
+
     return {
         "available": True,
         "start_time": start_time,

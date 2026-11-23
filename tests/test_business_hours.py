@@ -188,3 +188,52 @@ def test_business_cannot_access_another_business_hours(client):
     )
 
     assert update_response.status_code == 404
+
+
+def test_open_day_requires_opening_and_closing_times(client):
+    token = create_owner_and_get_token(client)
+
+    response = client.post(
+        "/business-hours/",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "day_of_week": 0,
+            "is_closed": False,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_closing_time_must_be_after_opening_time(client):
+    token = create_owner_and_get_token(client)
+
+    response = client.post(
+        "/business-hours/",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "day_of_week": 0,
+            "open_time": "17:00:00",
+            "close_time": "09:00:00",
+            "is_closed": False,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_closed_day_cannot_have_opening_times(client):
+    token = create_owner_and_get_token(client)
+
+    response = client.post(
+        "/business-hours/",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "day_of_week": 0,
+            "open_time": "09:00:00",
+            "close_time": "17:00:00",
+            "is_closed": True,
+        },
+    )
+
+    assert response.status_code == 422

@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from tests.test_services import create_owner_and_get_token
+from tests.date_helpers import get_future_monday
 
 
 def create_owner_and_get_token(client):
@@ -75,7 +76,7 @@ def test_employee_is_available_during_business_hours(client):
         params={
             "service_id": service_response.json()["id"],
             "employee_id": employee_response.json()["id"],
-            "start_time": "2026-11-23T10:00:00",
+            "start_time": get_future_monday().isoformat(),
         },
     )
 
@@ -126,7 +127,7 @@ def test_appointment_outside_business_hours_is_unavailable(client):
         params={
             "service_id": service_response.json()["id"],
             "employee_id": employee_response.json()["id"],
-            "start_time": "2026-11-23T16:30:00",
+            "start_time": get_future_monday().replace(hour=16, minute=30).isoformat(),
         },
     )
 
@@ -179,7 +180,7 @@ def test_appointment_on_closed_day_is_unavailable(client):
         params={
             "service_id": service_response.json()["id"],
             "employee_id": employee_response.json()["id"],
-            "start_time": "2026-11-23T10:00:00",
+            "start_time": get_future_monday().isoformat(),
         },
     )
 
@@ -234,7 +235,7 @@ def test_employee_with_existing_appointment_is_unavailable(client):
             "service_id": service_response.json()["id"],
             "employee_id": employee_response.json()["id"],
             "customer_name": "Test Customer",
-            "start_time": "2026-11-23T10:00:00",
+            "start_time": get_future_monday().isoformat(),
         },
     )
 
@@ -246,10 +247,12 @@ def test_employee_with_existing_appointment_is_unavailable(client):
         params={
             "service_id": service_response.json()["id"],
             "employee_id": employee_response.json()["id"],
-            "start_time": "2026-11-23T10:30:00",
+            "start_time": get_future_monday().replace(
+                hour=10,
+                minute=30,
+            ).isoformat(),
         },
     )
-
     assert response.status_code == 200
     assert response.json()["available"] is False
     assert response.json()["reason"] == (

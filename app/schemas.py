@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator, field_validator
 from decimal import Decimal
 from datetime import datetime, time
 
@@ -78,6 +78,17 @@ class AppointmentCreate(BaseModel):
     customer_phone: str | None = Field(default=None, max_length=20)
     start_time: datetime
 
+    @field_validator("start_time")
+    @classmethod
+    def validate_start_time(cls, value: datetime):
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("Appointment time must include a timezone.")
+
+        if value <= datetime.now(value.tzinfo):
+            raise ValueError("Appointments cannot be booked in the past.")
+
+        return value
+
 
 class AppointmentResponse(BaseModel):
     id: int
@@ -100,6 +111,26 @@ class BusinessHoursCreate(BaseModel):
     open_time: time | None = None
     close_time: time | None = None
     is_closed: bool = False
+
+    @model_validator(mode="after")
+    def validate_business_hours(self):
+        if self.is_closed:
+            if self.open_time is not None or self.close_time is not None:
+                raise ValueError(
+                    "Closed days cannot have opening or closing times."
+                )
+        else:
+            if self.open_time is None or self.close_time is None:
+                raise ValueError(
+                    "Opening and closing times are required for open days."
+                )
+
+            if self.close_time <= self.open_time:
+                raise ValueError(
+                    "Closing time must be later than opening time."
+                )
+
+        return self
 
 
 class BusinessHoursResponse(BaseModel):

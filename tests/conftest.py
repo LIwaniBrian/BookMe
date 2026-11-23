@@ -5,7 +5,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-
+from datetime import datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 from app.main import app
 from app.database import Base, get_db
@@ -47,3 +48,22 @@ def client(db_session):
         yield test_client
 
     app.dependency_overrides.clear()
+
+
+def get_future_monday():
+    timezone = ZoneInfo("Africa/Johannesburg")
+    now = datetime.now(timezone)
+
+    days_until_monday = (7 - now.weekday()) % 7
+
+    # Always choose a Monday in the future.
+    if days_until_monday == 0:
+        days_until_monday = 7
+
+    future_monday = now.date() + timedelta(days=days_until_monday)
+
+    return datetime.combine(
+        future_monday,
+        time(10, 0),
+        tzinfo=timezone,
+    )

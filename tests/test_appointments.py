@@ -1,3 +1,6 @@
+from tests.date_helpers import get_future_monday
+
+
 def create_owner_and_get_token(client):
     registration = client.post(
         "/auth/register",
@@ -60,7 +63,7 @@ def create_test_appointment(client, headers):
             "service_id": service_response.json()["id"],
             "employee_id": employee_response.json()["id"],
             "customer_name": "Test Customer",
-            "start_time": "2026-11-23T10:00:00",
+            "start_time": get_future_monday().isoformat(),
         },
     )
 

@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from zoneinfo import ZoneInfo
 
 from app.database import get_db
 from app.dependencies import get_current_owner
@@ -12,6 +13,7 @@ from app.models import (
     Service,
 )
 from app.schemas import AppointmentCreate, AppointmentResponse
+BUSINESS_TIMEZONE = ZoneInfo("Africa/Johannesburg")
 
 router = APIRouter(
     prefix="/appointments",
@@ -36,7 +38,6 @@ def create_appointment(
             Service.business_id == current_user.business_id,
             Service.is_active == True,
         )
-
         .first()
     )
 
@@ -63,7 +64,15 @@ def create_appointment(
             detail="Employee not found",
         )
 
-    start_time = appointment_data.start_time
+    # Convert the supplied time to South African business time.
+    # Store it as a naive local datetime because the existing
+    # database columns use timezone-naive DateTime values.
+    start_time = (
+        appointment_data.start_time
+        .astimezone(BUSINESS_TIMEZONE)
+        .replace(tzinfo=None)
+    )
+
     end_time = start_time + timedelta(
         minutes=service.duration_minutes
     )
